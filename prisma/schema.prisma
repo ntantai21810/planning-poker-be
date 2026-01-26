@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String
+  password    String?
+  votingScale String   @default("fibonacci")
+  customScale String[]
+  isAnonymous Boolean  @default(false)
+  autoReveal  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stories      Story[]
+  participants Participant[]
+}
+
+model Story {
+  id          String   @id @default(uuid())
+  roomId      String
+  title       String
+  description String?
+  order       Int
+  estimate    String?
+  status      String   @default("pending") // pending, voting, completed, skipped
+  createdAt   DateTime @default(now())
+
+  room  Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  votes Vote[]
+
+  @@index([roomId])
+}
+
+model Participant {
+  id       String   @id @default(uuid())
+  roomId   String
+  name     String
+  role     String   @default("voter") // facilitator, voter, observer
+  isOnline Boolean  @default(true)
+  joinedAt DateTime @default(now())
+
+  room  Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  votes Vote[]
+
+  @@index([roomId])
+}
+
+model Vote {
+  id            String   @id @default(uuid())
+  storyId       String
+  participantId String
+  value         String
+  createdAt     DateTime @default(now())
+
+  story       Story       @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, participantId])
+  @@index([storyId])
+  @@index([participantId])
+}
