@@ -1,8 +1,9 @@
 # Production Dockerfile for NestJS Backend
-FROM node:20-alpine AS builder
+# Using Debian-based image for better Prisma compatibility
+FROM node:20-slim AS builder
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -10,7 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy prisma schema and generate client for linux-musl (Alpine)
+# Copy prisma schema and generate client
 COPY prisma ./prisma/
 RUN npx prisma generate
 
@@ -21,10 +22,10 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -34,7 +35,7 @@ COPY package*.json ./
 # Install production dependencies only
 RUN npm ci --only=production
 
-# Copy prisma schema and generate client for linux-musl (Alpine)
+# Copy prisma schema and generate client
 COPY prisma ./prisma/
 RUN npx prisma generate
 
