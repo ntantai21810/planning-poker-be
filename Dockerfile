@@ -1,13 +1,16 @@
 # Production Dockerfile for NestJS Backend
 FROM node:20-alpine AS builder
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
-# Install dependencies
+# Copy package files
 COPY package*.json ./
 RUN npm ci
 
-# Copy prisma schema and generate client
+# Copy prisma schema and generate client for linux-musl (Alpine)
 COPY prisma ./prisma/
 RUN npx prisma generate
 
@@ -20,6 +23,9 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine AS production
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 # Copy package files
@@ -28,15 +34,19 @@ COPY package*.json ./
 # Install production dependencies only
 RUN npm ci --only=production
 
-# Copy prisma schema and generate client
+# Copy prisma schema and generate client for linux-musl (Alpine)
 COPY prisma ./prisma/
 RUN npx prisma generate
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 # Expose port
 EXPOSE 3001
 
-# Run the application
-CMD ["node", "dist/main.js"]
+# Run migrations and start the application
+ENTRYPOINT ["./docker-entrypoint.sh"]
