@@ -1,0 +1,22 @@
+# Docker Compose for Backend Service Only
+# Uses external PostgreSQL database
+# Usage: docker-compose up -d --build
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: planning-poker-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # These override .env values if set
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5432/planning_poker}
+      PORT: ${PORT:-3001}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${PORT:-3001}:3001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
