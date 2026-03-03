@@ -9,7 +9,7 @@ on:
 jobs:
   info:
     name: Log Environment Info
-    runs-on: test
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
