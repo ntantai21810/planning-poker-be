@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  info:
+    name: Log Environment Info
+    runs-on: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log runner info
+        run: |
+          echo "===== Runner Info ====="
+          echo "OS: ${{ runner.os }}"
+          echo "Runner name: ${{ runner.name }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Run number: ${{ github.run_number }}"
+
+      - name: Log git context
+        run: |
+          echo "===== Git Context ====="
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch / ref: ${{ github.ref }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Log Node & npm versions
+        run: |
+          echo "===== Runtime Versions ====="
+          node --version
+          npm --version
+
+      - name: Log project metadata
+        run: |
+          echo "===== Package Info ====="
+          node -e "const p = require('./package.json'); console.log('Name:', p.name); console.log('Version:', p.version); console.log('License:', p.license);"
+
+      - name: Done
+        run: echo "✅ All info logged successfully."
